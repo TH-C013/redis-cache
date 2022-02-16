@@ -14,12 +14,6 @@ Reference the helm values `redis-test-helm-values` for all the required changes.
 
 _IMPORTANT_
 
-**_*set installCRDs=true *_**
-
-```
-
-```
-
 # Render chart locally and validate add --namespace flag to generate the chart for particular namespace
 
 `helm template redis --namespace redis --values redis-test-helm-values.yaml --output-dir ./manifests/test/ redis`
@@ -28,10 +22,9 @@ _IMPORTANT BEFORE APPLY_
 
 **\_\__ VOLUME ACCESS _\_\_**
 
-Because Bitnami charts run all the containers as runAsNonRoot we need to apply a monkey patch to have mariadb statefullset run on our linode.
-We need to add an INIT-CONTAINER that is going to go give the correct access to the Volume created.
+Because Bitnami charts run all the containers as runAsNonRoot we need to add an INIT-CONTAINER that is going to go give the correct access to the Volume created.
 The chart values file creates the Init-Container for us BUT make sure to update the volumePermission section of the chart and set it to true
-and that the both the podSecurityContext and containerSecurityContext are configured with the correct fsGroup
+Also ensure both the podSecurityContext and containerSecurityContext are configured with the correct fsGroup
 
 # Set volume-permissions Init-Container defintion
 
@@ -46,7 +39,7 @@ volumePermissions:
   enabled: true
 ```
 
-# If the configuration is done correclty generating the template would create the initContainer for the MariaDB statefullset
+# If the configuration is done correclty generating the template would create the initContainer for the Redis statefullset
 
 `manifests/test/redis/templates/master/statefulset.yaml`
 This will start an init container using the image defined and peformed the required actions as root user
@@ -75,34 +68,12 @@ This will start an init container using the image defined and peformed the requi
               subPath:
 ```
 
-**\_\__ Note that the issue that prompeted the change in the securityContext was still observed even after runing with root \*_\***
+**\_\__ Note that the issue that prompted the change in the securityContext was still observed even after runing with root \*_\***
 **\_\_\_ The resolution was to update the file permission for the moodledata directory to chmod 777 \_\_\_**
 
-```
-Fatal error: $CFG->dataroot is not writable, admin has to fix directory permissions! Exiting
-ls -la
-drwxr-xr-x  5 root root  4096 Feb  6 02:50 .
-drwxr-x---  3 root root  4096 Feb  9 02:28 ..
-drwx------  2 root root 16384 Feb  6 02:50 lost+found
-drwxrwxr-x 59 root root  4096 Feb  8 16:39 moodle
-drwxrwxrwx 12 root root  4096 Feb  8 16:06 moodledata  #Gave Full Permission to this directory chmod 777
-
-```
+# OPTIONAL
 
 **_*Create a ConfigMap for the redis deployment to mount the ''' file has a volume. Gives control over Server Configs*_**
-
-Need to have access over the Redis server configs in the php.ini file located in the container @ ``
-Create a configmap with all the ` ` configs and mount it by adding it to the deployment of Redis.
-
-```
-
-```
-
-# Update Redis deployment template generated with the config map mounted as a volume
-
-```
-
-```
 
 # Apply all the rendered yaml files using kubectl apply
 
@@ -123,5 +94,3 @@ Create a configmap with all the ` ` configs and mount it by adding it to the dep
 `helm uninstall redis -n redis`
 
 _POST INSTALL CONFIGURATION_
-
-#
