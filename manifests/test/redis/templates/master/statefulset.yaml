@@ -166,8 +166,8 @@ spec:
           app.kubernetes.io/component: master
       spec:
         accessModes:
-          - "ReadWriteOnce"
+          - "ReadWriteMany"
         resources:
           requests:
-            storage: "10Gi"
-        storageClassName: linode-block-storage-retain
+            storage: "5Gi"
+        storageClassName: rook-nfs-share1

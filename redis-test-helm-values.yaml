@@ -16,7 +16,7 @@ global:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-  storageClass: linode-block-storage-retain
+  storageClass: rook-nfs-share1
   redis:
     password: redisTH@13
 
@@ -395,14 +395,14 @@ master:
     ## If set to "-", storageClassName: "", which disables dynamic provisioning
     ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner
     ##
-    storageClass: linode-block-storage-retain
+    storageClass: rook-nfs-share1
     ## @param master.persistence.accessModes Persistent Volume access modes
     ##
     accessModes:
-      - ReadWriteOnce
+      - ReadWriteMany
     ## @param master.persistence.size Persistent Volume size
     ##
-    size: 10Gi
+    size: 5Gi
     ## @param master.persistence.annotations Additional custom annotations for the PVC
     ##
     annotations: {}
