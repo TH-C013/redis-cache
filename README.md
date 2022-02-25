@@ -1,36 +1,38 @@
-# Get Redis Helm Chart
+# Deploy Redis in LKE
 
-**_* Add chart repository locally -Setup Once- *_**
+### Get Redis Helm Chart
+
+**Add chart repository locally -Setup Once**
 helm repo add bitnami https://charts.bitnami.com/bitnami
 
-**_* Download a chart specified version from helm repository and unpacks it in local directory *_**
+**Download a chart specified version from helm repository and unpacks it in local directory**
 helm pull bitnami/redis --version 16.3.0 --untar
 
-**\_\__ OPTION-1 _\_\_**
+## OPTION-1
 
-# Update your helm values and deploy using kubectl apply
+### Update your helm values and deploy using kubectl apply
 
-Reference the helm values `redis-test-helm-values` for all the required changes for Dev
+Reference the helm values `redis-test-helm-values` for all the required changes for Test
 
 Reference `redis-prod-helm-values` for Prod
 
-_IMPORTANT_
+### Render chart locally and validate add `--namespace` flag to generate the chart for particular namespace
 
-# Render chart locally and validate add --namespace flag to generate the chart for particular namespace
-
+_Test_
 `helm template redis --namespace redis --values redis-test-helm-values.yaml --output-dir ./manifests/test/ redis`
 
+_Prod_
 `helm template redis --namespace redis --values redis-prod-helm-values.yaml --output-dir ./manifests/prod/ redis`
 
 _IMPORTANT BEFORE APPLY_
 
-**\_\__ VOLUME ACCESS _\_\_**
+**VOLUME ACCESS**
 
 Because Bitnami charts run all the containers as runAsNonRoot we need to add an INIT-CONTAINER that is going to go give the correct access to the Volume created.
 The chart values file creates the Init-Container for us BUT make sure to update the volumePermission section of the chart and set it to true
 Also ensure both the podSecurityContext and containerSecurityContext are configured with the correct fsGroup
 
-# Set volume-permissions Init-Container defintion
+### Set volume-permissions Init-Container defintion
 
 ```
 ## 'volumePermissions' init container parameters
@@ -43,7 +45,7 @@ volumePermissions:
   enabled: true
 ```
 
-# If the configuration is done correclty generating the template would create the initContainer for the Redis statefullset
+### If the configuration is done correclty generating the template would create the initContainer for the Redis statefullset
 
 `manifests/test/redis/templates/master/statefulset.yaml`
 This will start an init container using the image defined and peformed the required actions as root user
@@ -72,14 +74,14 @@ This will start an init container using the image defined and peformed the requi
               subPath:
 ```
 
-**\_\__ Note that the issue that prompted the change in the securityContext was still observed even after runing with root \*_\***
-**\_\_\_ The resolution was to update the file permission for the moodledata directory to chmod 777 \_\_\_**
+** Note that the issue that prompted the change in the securityContext was still observed even after runing with root.
+** The resolution was to update the file permission for the moodledata directory to chmod 777.
 
-# OPTIONAL
+## OPTIONAL
 
-**_*Create a ConfigMap for the redis deployment to mount the ''' file has a volume. Gives control over Server Configs*_**
+**Create a ConfigMap for the redis deployment to mount the ''' file has a volume. Gives control over Server Configs**
 
-# Apply all the rendered yaml files using kubectl apply
+### Apply all the rendered yaml files using kubectl apply
 
 _Test_
 `k apply -Rf manifests/test/redis -n redis`
@@ -87,7 +89,7 @@ _Test_
 _Prod_
 `k apply -Rf manifests/prod/redis -n redis`
 
-# Un-install - Delete all the rendered yaml files
+### Uninstall \ Delete all the rendered yaml files
 
 _Test_
 `k delete -Rf manifests/test/redis -n redis`
@@ -95,13 +97,17 @@ _Test_
 _Prod_
 `k delete -Rf manifests/prod/redis -n redis`
 
-**\_\__ OPTION-2 _\_\_**
+## OPTION-2
 
-# Use the Helm upgrade --install and pass the values instead.
+### Use `helm upgrade --install` and pass the values file.
 
-`helm upgrade --install redis bitnami/redis --namespace redis `
+_Test_
+`helm upgrade --install redis bitnami/redis --namespace redis`
 
-# Un-install using helm uninstal - Delete all the objects created
+_Prod_
+`helm upgrade --install redis bitnami/redis --namespace redis`
+
+### Uninstall using `helm uninstal`
 
 `helm uninstall redis -n redis`
 
