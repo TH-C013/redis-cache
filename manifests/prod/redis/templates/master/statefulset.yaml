@@ -1,0 +1,173 @@
+---
+# Source: redis/templates/master/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-master
+  namespace: "redis"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-16.3.1
+    app.kubernetes.io/instance: redis
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/component: master
+  serviceName: redis-headless
+  updateStrategy:
+    rollingUpdate: {}
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        helm.sh/chart: redis-16.3.1
+        app.kubernetes.io/instance: redis
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: master
+      annotations:
+        checksum/configmap: dcbe2a4ebcff8a45d368a841b1322a97e6af06443c6f5aa1dbfb15ba9c48f266
+        checksum/health: 92bf22e25bfd8cd8a62d4fc0798b59eafc424c35a3bd679573f6a21c96a33142
+        checksum/scripts: cf297fa4ad9f70487dfe149e21520241b4e8a9e5fc71d07f7a8604eeeaf4b587
+        checksum/secret: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    spec:
+      
+      securityContext:
+        fsGroup: 1001
+      serviceAccountName: redis
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: redis
+                    app.kubernetes.io/instance: redis
+                    app.kubernetes.io/component: master
+                namespaces:
+                  - "redis"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: redis
+          image: docker.io/bitnami/redis:6.2.6-debian-10-r120
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            runAsUser: 1001
+          command:
+            - /bin/bash
+          args:
+            - -c
+            - /opt/bitnami/scripts/start-scripts/start-master.sh
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: REDIS_REPLICATION_MODE
+              value: master
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "yes"
+            - name: REDIS_TLS_ENABLED
+              value: "no"
+            - name: REDIS_PORT
+              value: "6379"
+          ports:
+            - name: redis
+              containerPort: 6379
+          livenessProbe:
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            # One second longer than command timeout should prevent generation of zombie processes.
+            timeoutSeconds: 6
+            successThreshold: 1
+            failureThreshold: 5
+            exec:
+              command:
+                - sh
+                - -c
+                - /health/ping_liveness_local.sh 5
+          readinessProbe:
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 5
+            exec:
+              command:
+                - sh
+                - -c
+                - /health/ping_readiness_local.sh 1
+          resources:
+            limits: {}
+            requests: {}
+          volumeMounts:
+            - name: start-scripts
+              mountPath: /opt/bitnami/scripts/start-scripts
+            - name: health
+              mountPath: /health
+            - name: redis-data
+              mountPath: /data
+              subPath: 
+            - name: config
+              mountPath: /opt/bitnami/redis/mounted-etc
+            - name: redis-tmp-conf
+              mountPath: /opt/bitnami/redis/etc/
+            - name: tmp
+              mountPath: /tmp
+      initContainers:
+        - name: volume-permissions
+          image: docker.io/bitnami/bitnami-shell:10-debian-10-r329
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              chown -R 1001:1001 /data
+          securityContext:
+            runAsUser: 0
+          resources:
+            limits: {}
+            requests: {}
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+              subPath: 
+      volumes:
+        - name: start-scripts
+          configMap:
+            name: redis-scripts
+            defaultMode: 0755
+        - name: health
+          configMap:
+            name: redis-health
+            defaultMode: 0755
+        - name: config
+          configMap:
+            name: redis-configuration
+        - name: redis-tmp-conf
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+        labels:
+          app.kubernetes.io/name: redis
+          app.kubernetes.io/instance: redis
+          app.kubernetes.io/component: master
+      spec:
+        accessModes:
+          - "ReadWriteMany"
+        resources:
+          requests:
+            storage: "6Gi"
+        storageClassName: rook-nfs-share

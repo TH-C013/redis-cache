@@ -10,13 +10,17 @@ helm pull bitnami/redis --version 16.3.0 --untar
 
 # Update your helm values and deploy using kubectl apply
 
-Reference the helm values `redis-test-helm-values` for all the required changes.
+Reference the helm values `redis-test-helm-values` for all the required changes for Dev
+
+Reference `redis-prod-helm-values` for Prod
 
 _IMPORTANT_
 
 # Render chart locally and validate add --namespace flag to generate the chart for particular namespace
 
 `helm template redis --namespace redis --values redis-test-helm-values.yaml --output-dir ./manifests/test/ redis`
+
+`helm template redis --namespace redis --values redis-prod-helm-values.yaml --output-dir ./manifests/prod/ redis`
 
 _IMPORTANT BEFORE APPLY_
 
@@ -77,11 +81,19 @@ This will start an init container using the image defined and peformed the requi
 
 # Apply all the rendered yaml files using kubectl apply
 
+_Test_
 `k apply -Rf manifests/test/redis -n redis`
+
+_Prod_
+`k apply -Rf manifests/prod/redis -n redis`
 
 # Un-install - Delete all the rendered yaml files
 
+_Test_
 `k delete -Rf manifests/test/redis -n redis`
+
+_Prod_
+`k delete -Rf manifests/prod/redis -n redis`
 
 **\_\__ OPTION-2 _\_\_**
 
