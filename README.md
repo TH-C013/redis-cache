@@ -45,12 +45,15 @@ volumePermissions:
   enabled: true
 ```
 
-If the configuration is done correclty generating the template would create the initContainer for the Redis statefullset
-`manifests/test/redis/templates/master/statefulset.yaml`.
-This will start an init container using the image defined and peformed the required actions as root user
+If the configuration is done correclty generating the template would create the initContainer for the Redis statefullset.
+
+`manifests/test/redis/templates/master/statefulset.yaml`
+
+This will start an init container using the image defined and peformed the required actions as root user.
 
 1- Create the required directory `mkdir -p "/data"`
-2- Grant the correct access right to the user 1001 `chown -R "1001:1001" "/data"` to the required directory
+
+2- Grant the correct access right to the user 1001 `chown -R "1001:1001" "/data"` to the required directory.
 
 ```
       initContainers:
@@ -73,8 +76,9 @@ This will start an init container using the image defined and peformed the requi
               subPath:
 ```
 
-** Note certain apps still require change of permissions using chmod.
-** Example: chmod -R 777 /(directory name) or chmod 755 -R /(directory name)
+\*\* Note certain apps still require change of permissions using chmod.
+
+\*\* Example: chmod -R 777 /(directory name) or chmod 755 -R /(directory name)
 
 ## OPTIONAL
 
