@@ -45,9 +45,8 @@ volumePermissions:
   enabled: true
 ```
 
-### If the configuration is done correclty generating the template would create the initContainer for the Redis statefullset
-
-`manifests/test/redis/templates/master/statefulset.yaml`
+If the configuration is done correclty generating the template would create the initContainer for the Redis statefullset
+`manifests/test/redis/templates/master/statefulset.yaml`.
 This will start an init container using the image defined and peformed the required actions as root user
 
 1- Create the required directory `mkdir -p "/data"`
@@ -74,14 +73,14 @@ This will start an init container using the image defined and peformed the requi
               subPath:
 ```
 
-** Note that the issue that prompted the change in the securityContext was still observed even after runing with root.
-** The resolution was to update the file permission for the moodledata directory to chmod 777.
+** Note certain apps still require change of permissions using chmod.
+** Example: chmod -R 777 /(directory name) or chmod 755 -R /(directory name)
 
 ## OPTIONAL
 
 **Create a ConfigMap for the redis deployment to mount the ''' file has a volume. Gives control over Server Configs**
 
-### Apply all the rendered yaml files using kubectl apply
+### Apply all the rendered definitions yaml files using kubectl apply
 
 _Test_
 `k apply -Rf manifests/test/redis -n redis`
@@ -110,5 +109,3 @@ _Prod_
 ### Uninstall using `helm uninstal`
 
 `helm uninstall redis -n redis`
-
-_POST INSTALL CONFIGURATION_
